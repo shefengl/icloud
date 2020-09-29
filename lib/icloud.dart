@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ffi';
 
 import 'package:flutter/services.dart';
 
@@ -16,8 +15,19 @@ class Icloud {
     return number;
   }
 
-  static Future<void> upLoadFile() async {
-    await _channel.invokeMethod('upLoadFile');
+  static Future<void> upLoadFile(
+      {String dir, String subDir, String fileName, String privateKey}) async {
+    await _channel.invokeMethod('upLoadFile', [dir, subDir, fileName, privateKey]);
     return;
+  }
+
+  static Future<bool> isIcloudAvailable() async {
+    bool isAvailable = await _channel.invokeMethod('isIcloudAvailable');
+    return isAvailable;
+  }
+
+  static Future<String> readFile({String dir, String subDir, String fileName}) async {
+    String value = await _channel.invokeMethod('readFile', [dir, subDir, fileName]);
+    return value;
   }
 }

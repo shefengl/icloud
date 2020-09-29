@@ -56,10 +56,32 @@ class _MyAppState extends State<MyApp> {
           children: [
             RaisedButton(
               onPressed: () async {
-                await Icloud.upLoadFile();
+                bool isAvailable = await Icloud.isIcloudAvailable();
+                if (isAvailable) {
+                  await Icloud.upLoadFile(
+                      dir: 'myName',
+                      subDir: 'walletId',
+                      fileName: 'privateKey',
+                      privateKey: 'dkdkdkadfadfeafaefaefaf');
+                } else {}
+                print(isAvailable);
               },
-              child: Text("sfsdf"),
+              child: Text('uplaod file'),
               color: Colors.red,
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            RaisedButton(
+              onPressed: () async {
+                if (await Icloud.isIcloudAvailable()) {
+                  String value = await Icloud.readFile(
+                      dir: 'myName', subDir: 'walletId', fileName: 'privateKey');
+                  print(value);
+                }
+              },
+              child: Text('read from icloud'),
+              color: Colors.green,
             ),
             Text('Running on: $_platformVersion\n'),
           ],

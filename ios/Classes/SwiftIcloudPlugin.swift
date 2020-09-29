@@ -5,6 +5,8 @@ enum MethodName:String {
     case getPlatformVersion
     case getTextNumbber
     case upLoadFile
+    case isIcloudAvailable
+    case readFile
 
 }
 
@@ -23,28 +25,45 @@ public class SwiftIcloudPlugin: NSObject, FlutterPlugin {
     case MethodName.getTextNumbber.rawValue:
         result("5")
     case MethodName.upLoadFile.rawValue:
-        do {
-            try  startBackup()
-        } catch {
-            print("ddd")
+        if let arguments = call.arguments as? Array<Any>, let dir = arguments[0] as? String, let subDir = arguments[1] as? String, let fileName = arguments[2] as? String, let privateKey = arguments[3] as? String {
+            
+            do {
+                try  startBackup(dir: dir, subDir: subDir, fileName: fileName, privateKey: privateKey)
+            } catch {
+                result(false)
+            }
+        } else {
+            result(false)
         }
-
-        result(nil)
+      
+    case MethodName.isIcloudAvailable.rawValue:
+        let token = FileManager.default.ubiquityIdentityToken
+        if token == nil {
+            result(false)
+        } else {
+            result(true)
+        }
+    case MethodName.readFile.rawValue:
+        if let arguments = call.arguments as? Array<Any>, let dir = arguments[0] as? String, let subDir = arguments[1] as? String, let fileName = arguments[2] as? String {
+            let value = readFile(dir: dir, subDir: subDir, fileName: fileName)
+            result(value)
+            
+        } else {
+            result(nil)
+        }
     default:
         result("null")
     }
     
   }
     
-    func startBackup() throws {
+    func startBackup(dir: String, subDir: String, fileName: String, privateKey: String) throws {
         print("start")
-//        guard let fileURL = Bundle.main.url(forResource: "sample", withExtension: "txt") else { return }
         
         let directoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let testurl = URL(fileURLWithPath: "myFile", relativeTo: directoryURL).appendingPathExtension("txt")
         
-        let myString = "saving data"
-        guard let data = myString.data(using: .utf8) else {
+        guard let data = privateKey.data(using: .utf8) else {
            print("Unable")
             return
         }
@@ -53,24 +72,16 @@ public class SwiftIcloudPlugin: NSObject, FlutterPlugin {
         } catch {
             print(error.localizedDescription)
         }
-        do {
-         let data = try Data(contentsOf: testurl)
-            if let string = String(data: data, encoding: .utf8) {
-                print(string)
-            }
-        } catch {
-            print(error.localizedDescription)
-        }
         
         print(testurl)
-        let containerURL = FileManager.default.url(forUbiquityContainerIdentifier: nil)!.appendingPathComponent("Documents").appendingPathComponent("test", isDirectory: true)
+        let containerURL = FileManager.default.url(forUbiquityContainerIdentifier: nil)!.appendingPathComponent("Documents").appendingPathComponent(dir, isDirectory: true).appendingPathComponent(subDir, isDirectory: true)
     
         if !FileManager.default.fileExists(atPath: containerURL.path, isDirectory: nil) {
             try FileManager.default.createDirectory(at: containerURL, withIntermediateDirectories: true, attributes: nil)
         }
         let backupFileURL = containerURL
             
-            .appendingPathComponent("myFile")
+            .appendingPathComponent(fileName)
             .appendingPathExtension("txt")
         print(backupFileURL)
         
@@ -83,15 +94,28 @@ public class SwiftIcloudPlugin: NSObject, FlutterPlugin {
            
         }
         
+    }
+    
+    func readFile(dir: String, subDir: String, fileName: String) -> String? {
+        let containerURL = FileManager.default.url(forUbiquityContainerIdentifier: nil)!.appendingPathComponent("Documents").appendingPathComponent(dir, isDirectory: true).appendingPathComponent(subDir, isDirectory: true)
+        if !FileManager.default.fileExists(atPath: containerURL.path, isDirectory: nil) {
+            return nil
+        }
+        let backupFileURL = containerURL
+            .appendingPathComponent(fileName)
+            .appendingPathExtension("txt")
+        
         do {
          let data = try Data(contentsOf: backupFileURL)
             if let string = String(data: data, encoding: .utf8) {
-                print(string)
+               return string
             }
         } catch {
-            print("lll")
+           return nil
         }
         
+        return nil
+
     }
 
 }
