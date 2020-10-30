@@ -30,4 +30,14 @@ class Icloud {
     String value = await _channel.invokeMethod('readFile', [dir, subDir, fileName]);
     return value;
   }
+
+  static Future<void> checkIcloudStatus() async {
+    await _channel.invokeMethod('checkIcloudUserStatus');
+    return;
+  }
+
+  static Future<bool> checkIfUploaded() async {
+    bool isUploaded = await _channel.invokeMethod('checkIfUploaded');
+    return isUploaded;
+  }
 }

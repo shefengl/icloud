@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import CloudKit
 
 enum MethodName:String {
     case getPlatformVersion
@@ -7,6 +8,8 @@ enum MethodName:String {
     case upLoadFile
     case isIcloudAvailable
     case readFile
+    case checkIcloudUserStatus
+    case checkIfUploaded
 
 }
 
@@ -51,6 +54,17 @@ public class SwiftIcloudPlugin: NSObject, FlutterPlugin {
         } else {
             result(nil)
         }
+    case MethodName.checkIcloudUserStatus.rawValue:
+        checkIcloudUserStatus()
+        result(nil)
+    case MethodName.checkIfUploaded.rawValue:
+        if let arguments = call.arguments as? Array<Any>, let dir = arguments[0] as? String, let subDir = arguments[1] as? String, let fileName = arguments[2] as? String {
+            let value = checkIfFilesUploaded(dir: dir, subDir: subDir, fileName: fileName)
+            result(value)
+            
+        } else {
+            result(false)
+        }
     default:
         result("null")
     }
@@ -62,7 +76,6 @@ public class SwiftIcloudPlugin: NSObject, FlutterPlugin {
         
         let directoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let testurl = URL(fileURLWithPath: "myFile", relativeTo: directoryURL).appendingPathExtension("txt")
-        
         guard let data = privateKey.data(using: .utf8) else {
            print("Unable")
             return
@@ -117,5 +130,42 @@ public class SwiftIcloudPlugin: NSObject, FlutterPlugin {
         return nil
 
     }
-
+    func checkIfFilesUploaded(dir: String, subDir: String, fileName: String) -> Bool {
+        let containerURL = FileManager.default.url(forUbiquityContainerIdentifier: nil)!.appendingPathComponent("Documents").appendingPathComponent(dir, isDirectory: true).appendingPathComponent(subDir, isDirectory: true)
+        if !FileManager.default.fileExists(atPath: containerURL.path, isDirectory: nil) {
+            return false
+        }
+        let backupFileURL = containerURL
+            .appendingPathComponent(fileName)
+            .appendingPathExtension("txt")
+        let isloaded = try? backupFileURL.resourceValues(forKeys: [URLResourceKey.ubiquitousItemIsUploadedKey])
+        return isloaded?.ubiquitousItemIsUploaded ?? false
+    }
+    
+    func downLoadFile(dir: String, subDir: String, fileName: String) {
+        let containerURL = FileManager.default.url(forUbiquityContainerIdentifier: nil)!.appendingPathComponent("Documents").appendingPathComponent(dir, isDirectory: true).appendingPathComponent(subDir, isDirectory: true)
+        do {
+            try FileManager.default.startDownloadingUbiquitousItem(at:containerURL)
+        } catch {
+            print("Unexpected error: \(error)")
+        }
+    }
+    
+    func checkIcloudUserStatus() {
+        CKContainer.default().accountStatus { (accountStatus, error) in
+            print("d")
+            switch accountStatus {
+            case .available:
+                print("iCloud Available")
+            case .noAccount:
+                print("No iCloud account")
+            case .restricted:
+                print("iCloud restricted")
+            case .couldNotDetermine:
+                print("Unable to determine iCloud status")
+            default:
+                print("default")
+            }
+        }
+    }
 }
