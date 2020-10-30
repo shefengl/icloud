@@ -36,8 +36,8 @@ class Icloud {
     return;
   }
 
-  static Future<bool> checkIfUploaded() async {
-    bool isUploaded = await _channel.invokeMethod('checkIfUploaded');
+  static Future<bool> checkIfUploaded({String dir, String subDir, String fileName}) async {
+    bool isUploaded = await _channel.invokeMethod('checkIfUploaded', [dir, subDir, fileName]);
     return isUploaded;
   }
 }
