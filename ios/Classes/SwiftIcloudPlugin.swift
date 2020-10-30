@@ -32,6 +32,7 @@ public class SwiftIcloudPlugin: NSObject, FlutterPlugin {
             
             do {
                 try  startBackup(dir: dir, subDir: subDir, fileName: fileName, privateKey: privateKey)
+                result(nil)
             } catch {
                 result(false)
             }
