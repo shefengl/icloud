@@ -40,4 +40,9 @@ class Icloud {
     bool isUploaded = await _channel.invokeMethod('checkIfUploaded', [dir, subDir, fileName]);
     return isUploaded;
   }
+
+  static Future<bool> checkIfDownloaded({String dir, String subDir, String fileName}) async {
+    bool isUploaded = await _channel.invokeMethod('checkIfDownloaded', [dir, subDir, fileName]);
+    return isUploaded;
+  }
 }

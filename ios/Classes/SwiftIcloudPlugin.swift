@@ -10,6 +10,9 @@ enum MethodName:String {
     case readFile
     case checkIcloudUserStatus
     case checkIfUploaded
+    case checkIfIsUploading
+    case checkIfUploadingError
+    case checkIfDownloaded
 
 }
 
@@ -59,6 +62,31 @@ public class SwiftIcloudPlugin: NSObject, FlutterPlugin {
         checkIcloudUserStatus()
         result(nil)
     case MethodName.checkIfUploaded.rawValue:
+        if let arguments = call.arguments as? Array<Any>, let dir = arguments[0] as? String, let subDir = arguments[1] as? String, let fileName = arguments[2] as? String {
+            let value = checkIfFilesUploaded(dir: dir, subDir: subDir, fileName: fileName)
+            result(value)
+            
+        } else {
+            result(false)
+        }
+        
+    case MethodName.checkIfDownloaded.rawValue:
+        if let arguments = call.arguments as? Array<Any>, let dir = arguments[0] as? String, let subDir = arguments[1] as? String, let fileName = arguments[2] as? String {
+            let value = checkIfFilesDownloaded(dir: dir, subDir: subDir, fileName: fileName)
+            result(value)
+            
+        } else {
+            result(false)
+        }
+    case MethodName.checkIfIsUploading.rawValue:
+        if let arguments = call.arguments as? Array<Any>, let dir = arguments[0] as? String, let subDir = arguments[1] as? String, let fileName = arguments[2] as? String {
+            let value = checkIfFilesUploaded(dir: dir, subDir: subDir, fileName: fileName)
+            result(value)
+            
+        } else {
+            result(false)
+        }
+    case MethodName.checkIfUploadingError.rawValue:
         if let arguments = call.arguments as? Array<Any>, let dir = arguments[0] as? String, let subDir = arguments[1] as? String, let fileName = arguments[2] as? String {
             let value = checkIfFilesUploaded(dir: dir, subDir: subDir, fileName: fileName)
             result(value)
@@ -141,6 +169,19 @@ public class SwiftIcloudPlugin: NSObject, FlutterPlugin {
             .appendingPathExtension("txt")
         let isloaded = try? backupFileURL.resourceValues(forKeys: [URLResourceKey.ubiquitousItemIsUploadedKey])
         return isloaded?.ubiquitousItemIsUploaded ?? false
+    }
+    
+    func checkIfFilesDownloaded(dir: String, subDir: String, fileName: String) -> Bool {
+        let containerURL = FileManager.default.url(forUbiquityContainerIdentifier: nil)!.appendingPathComponent("Documents").appendingPathComponent(dir, isDirectory: true).appendingPathComponent(subDir, isDirectory: true)
+        if !FileManager.default.fileExists(atPath: containerURL.path, isDirectory: nil) {
+            return false
+        }
+        let backupFileURL = containerURL
+            .appendingPathComponent(fileName)
+            .appendingPathExtension("txt")
+        let isloaded = try? backupFileURL.resourceValues(forKeys: [URLResourceKey.ubiquitousItemDownloadingStatusKey])
+        print(isloaded?.ubiquitousItemDownloadingStatus?.rawValue);
+        return (isloaded?.ubiquitousItemDownloadingStatus == .current)
     }
     
     func downLoadFile(dir: String, subDir: String, fileName: String) {
