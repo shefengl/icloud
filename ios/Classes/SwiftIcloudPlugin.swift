@@ -6,6 +6,7 @@ enum MethodName:String {
     case getPlatformVersion
     case getTextNumbber
     case upLoadFile
+    case downloadFile
     case isIcloudAvailable
     case readFile
     case checkIcloudUserStatus
@@ -73,6 +74,15 @@ public class SwiftIcloudPlugin: NSObject, FlutterPlugin {
     case MethodName.checkIfDownloaded.rawValue:
         if let arguments = call.arguments as? Array<Any>, let dir = arguments[0] as? String, let subDir = arguments[1] as? String, let fileName = arguments[2] as? String {
             let value = checkIfFilesDownloaded(dir: dir, subDir: subDir, fileName: fileName)
+            result(value)
+            
+        } else {
+            result(false)
+        }
+        
+    case MethodName.downloadFile.rawValue:
+        if let arguments = call.arguments as? Array<Any>, let dir = arguments[0] as? String, let subDir = arguments[1] as? String, let fileName = arguments[2] as? String {
+            let value = downLoadFile(dir: dir, subDir: subDir, fileName: fileName)
             result(value)
             
         } else {
@@ -180,16 +190,23 @@ public class SwiftIcloudPlugin: NSObject, FlutterPlugin {
             .appendingPathComponent(fileName)
             .appendingPathExtension("txt")
         let isloaded = try? backupFileURL.resourceValues(forKeys: [URLResourceKey.ubiquitousItemDownloadingStatusKey])
-        print(isloaded?.ubiquitousItemDownloadingStatus?.rawValue);
         return (isloaded?.ubiquitousItemDownloadingStatus == .current)
     }
     
-    func downLoadFile(dir: String, subDir: String, fileName: String) {
+    func downLoadFile(dir: String, subDir: String, fileName: String) -> Bool {
         let containerURL = FileManager.default.url(forUbiquityContainerIdentifier: nil)!.appendingPathComponent("Documents").appendingPathComponent(dir, isDirectory: true).appendingPathComponent(subDir, isDirectory: true)
+        if !FileManager.default.fileExists(atPath: containerURL.path, isDirectory: nil) {
+            return false
+        }
+        let backupFileURL = containerURL
+            .appendingPathComponent(fileName)
+            .appendingPathExtension("txt")
         do {
-            try FileManager.default.startDownloadingUbiquitousItem(at:containerURL)
+            try FileManager.default.startDownloadingUbiquitousItem(at:backupFileURL)
+            return true
         } catch {
             print("Unexpected error: \(error)")
+            return false
         }
     }
     
